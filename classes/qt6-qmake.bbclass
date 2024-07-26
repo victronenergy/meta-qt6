@@ -28,7 +28,8 @@ QMAKE_MKSPEC_PATH = "${QMAKE_MKSPEC_PATH_TARGET}"
 QMAKE_MKSPEC_PATH:class-native = "${QMAKE_MKSPEC_PATH_NATIVE}"
 QMAKE_MKSPEC_PATH:class-nativesdk = "${QMAKE_MKSPEC_PATH_NATIVE}"
 
-DEPENDS:prepend = "qtbase-native "
+# note: the qmake files for not qtbase live in qtbase it seems. So always add that as a depend.
+DEPENDS:prepend = "qtbase-native qtbase "
 
 # hardcode linux, because that's what 0001-Add-linux-oe-g-platform.patch adds
 XPLATFORM:toolchain-clang = "linux-oe-clang"
