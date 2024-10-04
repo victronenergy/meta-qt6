@@ -37,13 +37,40 @@ INSANE_SKIP:${PN}-examples += "libdir dev-so"
 
 SYSROOT_DIRS += "${QT6_INSTALL_BINDIR} ${QT6_INSTALL_LIBEXECDIR}"
 
-PACKAGE_BEFORE_PN = "${PN}-qmlplugins ${PN}-tools ${PN}-plugins ${PN}-examples"
+PACKAGE_BEFORE_PN = "${PN}-qmlplugins ${PN}-modules ${PN}-tools ${PN}-plugins ${PN}-examples"
+PACKAGES_DYNAMIC += "${PN}-plugin-.* ${PN}-qml-module-.*"
+
+QT_PLUGIN_EXT = "${SOLIBSDEV}"
+QT_PLUGIN_EXT:mingw = ".dll"
+
+python populate_packages:prepend () {
+    import re
+
+    pn = d.getVar('PN')
+
+    libdir = d.getVar('libdir')
+    packages = do_split_packages(d, libdir, '^(.+)\.so\.', '%s', pn + ' %s module', allow_links=True, extra_depends = '')
+    d.appendVar("RDEPENDS:%s-modules" % pn, " " + " ".join(packages))
+
+    plugindir = d.getVar('QT6_INSTALL_PLUGINSDIR')
+    ext = re.escape(d.getVar('QT_PLUGIN_EXT'))
+    packages = do_split_packages(d, plugindir, '^lib(.+)' + ext + '$', pn + '-plugin-%s', pn + ' %s plugin', recursive=True, extra_depends = '')
+    d.appendVar("RDEPENDS:%s-plugins" % pn, " " + " ".join(packages))
+
+    qmldir = d.getVar('QT6_INSTALL_QMLDIR')
+    packages = do_split_packages(d, qmldir, '^(.+)/qmldir$',
+                      pn + '-qml-module-%s', pn + ' %s qml module', aux_files_pattern_verbatim=qmldir + "/%s",
+                      recursive=True, match_path=True, subdirs_first=True, extra_depends = '')
+    d.appendVar("RDEPENDS:%s-qmlplugins" % pn, " " + " ".join(packages))
+}
 
 ALLOW_EMPTY:${PN} = "1"
+ALLOW_EMPTY:${PN}-modules = "1"
 ALLOW_EMPTY:${PN}-plugins = "1"
 ALLOW_EMPTY:${PN}-qmlplugins = "1"
 
 RRECOMMENDS:${PN} = " \
+    ${PN}-modules \
     ${PN}-plugins \
     ${PN}-qmlplugins \
 "
@@ -53,29 +80,12 @@ RRECOMMENDS:${PN}-dev += " \
     ${PN}-staticdev \
 "
 
-FILES:${PN}-qmlplugins = " \
-    ${QT6_INSTALL_QMLDIR} \
-"
-
 FILES:${PN}-tools = " \
     ${QT6_INSTALL_BINDIR} \
     ${QT6_INSTALL_LIBEXECDIR} \
 "
 
-FILES:${PN}-plugins = " \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*${SOLIBSDEV} \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*/*${SOLIBSDEV} \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*/*/*${SOLIBSDEV} \
-"
-FILES:${PN}-plugins:mingw32 = " \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*.dll \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*/*.dll \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*/*/*.dll \
-"
-
-FILES:${PN} += " \
-    ${QT6_INSTALL_LIBDIR}/lib*${SOLIBS} \
-"
+FILES:${PN} = ""
 
 FILES:${PN}-dev += " \
     ${QT6_INSTALL_DESCRIPTIONSDIR} \
