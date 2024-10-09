@@ -17,7 +17,7 @@ include recipes-qt/qt6/qt6.inc
 
 ENABLE_QMLCOMPILER = "0"
 
-DEPENDS += "qtbase"
+DEPENDS += "qtbase qtshadertools"
 
 PACKAGECONFIG ?= "qml"
 PACKAGECONFIG[iconv] = "-DFEATURE_iconv=ON,-DFEATURE_iconv=OFF,virtual/libiconv"
