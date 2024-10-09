@@ -25,13 +25,34 @@ python __anonymous() {
 
 SYSROOT_DIRS += "${QT6_INSTALL_BINDIR} ${QT6_INSTALL_LIBEXECDIR}"
 
-PACKAGE_BEFORE_PN = "${PN}-qmlplugins ${PN}-tools ${PN}-plugins"
+PACKAGE_BEFORE_PN = "${PN}-qmlplugins ${PN}-modules ${PN}-tools ${PN}-plugins ${PN}-examples"
+PACKAGES_DYNAMIC += "${PN}-plugin-.*"
+
+QT_PLUGIN_EXT = "${SOLIBSDEV}"
+QT_PLUGIN_EXT:mingw = ".dll"
+
+python populate_packages:prepend () {
+    import re
+
+    pn = d.getVar('PN')
+
+    libdir = d.getVar('libdir')
+    packages = do_split_packages(d, libdir, '^(.+)\.so\.', '%s', pn + ' %s module', allow_links=True, extra_depends = '')
+    d.appendVar("RDEPENDS:%s-modules" % pn, " " + " ".join(packages))
+
+    plugindir = d.getVar('QT6_INSTALL_PLUGINSDIR')
+    ext = re.escape(d.getVar('QT_PLUGIN_EXT'))
+    packages = do_split_packages(d, plugindir, '^lib(.+)' + ext + '$', pn + '-plugin-%s', pn + ' %s plugin', recursive=True, extra_depends = '')
+    d.appendVar("RDEPENDS:%s-plugins" % pn, " " + " ".join(packages))
+}
 
 ALLOW_EMPTY:${PN} = "1"
+ALLOW_EMPTY:${PN}-modules = "1"
 ALLOW_EMPTY:${PN}-plugins = "1"
 ALLOW_EMPTY:${PN}-qmlplugins = "1"
 
 RRECOMMENDS:${PN} = " \
+    ${PN}-modules \
     ${PN}-plugins \
     ${PN}-qmlplugins \
 "
@@ -50,20 +71,7 @@ FILES:${PN}-tools = " \
     ${QT6_INSTALL_LIBEXECDIR} \
 "
 
-FILES:${PN}-plugins = " \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*${SOLIBSDEV} \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*/*${SOLIBSDEV} \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*/*/*${SOLIBSDEV} \
-"
-FILES:${PN}-plugins:mingw32 = " \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*.dll \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*/*.dll \
-    ${QT6_INSTALL_PLUGINSDIR}/*/*/*/*.dll \
-"
-
-FILES:${PN} += " \
-    ${QT6_INSTALL_LIBDIR}/lib*${SOLIBS} \
-"
+FILES:${PN} = ""
 
 FILES:${PN}-dev += " \
     ${QT6_INSTALL_DESCRIPTIONSDIR} \
