@@ -19,4 +19,11 @@ DEPENDS += "qtbase"
 PACKAGECONFIG ?= "${@bb.utils.contains('DISTRO_FEATURES', 'bluetooth', 'bluez', '', d)}"
 PACKAGECONFIG[bluez] = "-DFEATURE_bluez=ON,-DFEATURE_bluez=OFF,bluez5"
 
+do_install:append() {
+    # ERROR: qtconnectivity-6.6.3-r0 do_package: QA Issue: qtconnectivity: Files/directories were installed but not shipped in any package:
+    rm ${D}/usr/libexec/qt6/sdpscanner
+    rmdir ${D}/usr/libexec/qt6
+    rmdir ${D}/usr/libexec
+}
+
 FILES:${PN}-tools = ""
